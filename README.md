@@ -1,4 +1,4 @@
-# Jira MCP Server
+# Jira MCP Server - Local Test Project
 
 A test project for a Model Context Protocol (MCP) server for creating Jira issues via HTTP API. This server provides a local HTTPS endpoint that accepts MCP protocol requests to create Jira tickets. Instructions included to test via Postman.
 
