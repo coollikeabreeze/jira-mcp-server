@@ -5,7 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "dev": "tsx src/index.ts",
+    "dev": "tsx src/jira-issue-server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,7 +13,9 @@
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.22.0",
+    "@types/express": "^5.0.5",
     "dotenv": "^17.2.3",
+    "express": "^5.1.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
