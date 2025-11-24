@@ -30,3 +30,10 @@ yarn-error.log*
 *.njsproj
 *.sln
 *.sw?
+
+# SSL Certificates
+*.key
+*.cert
+*.pem
+server.key
+server.cert
