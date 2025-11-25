@@ -1,4 +1,4 @@
-openapi: 3.0.0
+openapi: 3.1.0
 info:
   title: Jira MCP Server API
   description: API for creating Jira issues via Custom GPT Actions
@@ -7,17 +7,18 @@ servers:
   - url: https://jira-mcp-server-83ev.onrender.com
     description: Production server
 components:
+  schemas: {}
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: "API Key"
       description: "Enter your API key as a Bearer token"
-security:
-  - BearerAuth: []
 paths:
   /api/create-issue:
     post:
+      tags:
+        - Jira Issues
       summary: Create a Jira issue
       description: Creates a new issue in the configured Jira project
       operationId: createJiraIssue
@@ -39,9 +40,26 @@ paths:
                   description: The issue summary/title
                   example: "Fix login bug"
                 description:
-                  type: string
-                  description: The issue description
-                  example: "Users cannot log in with their credentials"
+                  type: object
+                  description: The issue description in Atlassian Document Format (ADF) JSON
+                  example:
+                    type: "doc"
+                    version: 1
+                    content:
+                      - type: "paragraph"
+                        content:
+                          - type: "text"
+                            text: "Users cannot log in with their credentials"
+                  properties:
+                    type:
+                      type: string
+                      example: "doc"
+                    version:
+                      type: number
+                      example: 1
+                    content:
+                      type: array
+                      description: Array of ADF content nodes
                 issuetype:
                   type: string
                   description: The issue type (e.g., Task, Bug, Story)
@@ -89,5 +107,42 @@ paths:
                     example: "Created Jira issue PROJ-456"
         "400":
           description: Bad request - missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing required fields"
+                  required:
+                    type: array
+                    items:
+                      type: string
+                    example: ["summary", "description", "issuetype"]
+        "401":
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+                  message:
+                    type: string
+                    example: "Valid API key required"
         "500":
           description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal Server Error"
+                  message:
+                    type: string
+                    example: "Failed to create Jira issue"
