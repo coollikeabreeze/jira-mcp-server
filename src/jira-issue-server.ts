@@ -61,7 +61,12 @@ server.registerTool(
 import https from "https";
 import http from "http";
 import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import "dotenv/config";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
@@ -103,6 +108,25 @@ app.use(apiKeyAuth);
 // Health check endpoint
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "jira-mcp-server" });
+});
+
+// Serve OpenAPI spec
+app.get("/openapi.yaml", (req, res) => {
+  // Try multiple possible paths (development vs production)
+  const possiblePaths = [
+    path.join(__dirname, "../openapi.yaml"), // Production (compiled)
+    path.join(process.cwd(), "openapi.yaml"), // Root directory
+    path.join(__dirname, "../../openapi.yaml"), // Alternative
+  ];
+
+  for (const openApiPath of possiblePaths) {
+    if (fs.existsSync(openApiPath)) {
+      res.setHeader("Content-Type", "text/yaml");
+      return res.sendFile(openApiPath);
+    }
+  }
+
+  res.status(404).json({ error: "OpenAPI spec not found" });
 });
 
 // Health check for /mcp endpoint

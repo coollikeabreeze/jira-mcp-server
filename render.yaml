@@ -3,7 +3,7 @@ services:
     name: jira-mcp-server
     env: node
     plan: free
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm install --include=dev && npm run build && cp openapi.yaml dist/ 2>/dev/null || true
     startCommand: npm start
     envVars:
       - key: NODE_ENV
