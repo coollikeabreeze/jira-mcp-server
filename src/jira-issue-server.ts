@@ -61,12 +61,7 @@ server.registerTool(
 import https from "https";
 import http from "http";
 import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
 import "dotenv/config";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
@@ -82,13 +77,21 @@ const apiKeyAuth = (
     req.headers["authorization"]?.replace("Bearer ", "");
   const validApiKey = process.env.API_KEY;
 
-  // Skip auth for health checks
+  // Skip auth for health checks only
   if (req.path === "/" || (req.path === "/mcp" && req.method === "GET")) {
     return next();
   }
 
+  // In production, require API key
+  if (process.env.NODE_ENV === "production" && !validApiKey) {
+    return res.status(500).json({
+      error: "Server configuration error",
+      message: "API_KEY environment variable is required in production",
+    });
+  }
+
+  // If no API_KEY is set (development only), allow access
   if (!validApiKey) {
-    // If no API_KEY is set, allow access (for development)
     return next();
   }
 
@@ -110,24 +113,8 @@ app.get("/", (req, res) => {
   res.json({ status: "ok", service: "jira-mcp-server" });
 });
 
-// Serve OpenAPI spec
-app.get("/openapi.yaml", (req, res) => {
-  // Try multiple possible paths (development vs production)
-  const possiblePaths = [
-    path.join(__dirname, "../openapi.yaml"), // Production (compiled)
-    path.join(process.cwd(), "openapi.yaml"), // Root directory
-    path.join(__dirname, "../../openapi.yaml"), // Alternative
-  ];
-
-  for (const openApiPath of possiblePaths) {
-    if (fs.existsSync(openApiPath)) {
-      res.setHeader("Content-Type", "text/yaml");
-      return res.sendFile(openApiPath);
-    }
-  }
-
-  res.status(404).json({ error: "OpenAPI spec not found" });
-});
+// OpenAPI spec endpoint removed for security
+// Paste the openapi.yaml content directly into Custom GPT Actions instead
 
 // Health check for /mcp endpoint
 app.get("/mcp", (req, res) => {
