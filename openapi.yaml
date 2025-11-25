@@ -4,7 +4,7 @@ info:
   description: API for creating Jira issues via Custom GPT Actions
   version: 1.0.0
 servers:
-  - url: https://your-service-name.onrender.com
+  - url: https://jira-mcp-server-83ev.onrender.com
     description: Production server
 components:
   securitySchemes:
