@@ -1,0 +1,70 @@
+openapi: 3.0.0
+info:
+  title: Jira MCP Server API
+  description: API for creating Jira issues via Custom GPT Actions
+  version: 1.0.0
+servers:
+  - url: https://your-service-name.onrender.com
+    description: Production server
+paths:
+  /api/create-issue:
+    post:
+      summary: Create a Jira issue
+      description: Creates a new issue in the configured Jira project
+      operationId: createJiraIssue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - summary
+                - description
+                - issuetype
+              properties:
+                summary:
+                  type: string
+                  description: The issue summary/title
+                  example: "Fix login bug"
+                description:
+                  type: string
+                  description: The issue description
+                  example: "Users cannot log in with their credentials"
+                issuetype:
+                  type: string
+                  description: The issue type (e.g., Task, Bug, Story)
+                  example: "Bug"
+                parentKey:
+                  type: string
+                  description: Parent issue key for subtasks (optional)
+                  example: "PROJ-123"
+                labels:
+                  type: array
+                  items:
+                    type: string
+                  description: Labels to apply to the issue (optional)
+                  example: ["bug", "urgent"]
+      responses:
+        "200":
+          description: Issue created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  issueKey:
+                    type: string
+                    example: "PROJ-456"
+                  issueId:
+                    type: string
+                  url:
+                    type: string
+                  message:
+                    type: string
+        "400":
+          description: Bad request - missing required fields
+        "500":
+          description: Internal server error

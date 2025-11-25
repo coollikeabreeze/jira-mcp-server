@@ -66,6 +66,58 @@ import "dotenv/config";
 const app = express();
 app.use(express.json());
 
+// Health check endpoint
+app.get("/", (req, res) => {
+  res.json({ status: "ok", service: "jira-mcp-server" });
+});
+
+// Health check for /mcp endpoint
+app.get("/mcp", (req, res) => {
+  res.json({
+    status: "ok",
+    service: "jira-mcp-server",
+    endpoint: "/mcp",
+    method: "POST",
+    protocol: "MCP",
+  });
+});
+
+// OpenAPI endpoint for Custom GPT Actions
+app.post("/api/create-issue", async (req, res) => {
+  try {
+    const { summary, description, issuetype, parentKey, labels } = req.body;
+
+    if (!summary || !description || !issuetype) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: ["summary", "description", "issuetype"],
+      });
+    }
+
+    const result = await createJiraIssue({
+      summary,
+      description,
+      issuetype,
+      parentKey,
+      labels,
+    });
+
+    res.json({
+      success: true,
+      issueKey: result.key,
+      issueId: result.id,
+      url: result.self,
+      message: `Created Jira issue ${result.key}`,
+    });
+  } catch (error) {
+    console.error("Error creating Jira issue:", error);
+    res.status(500).json({
+      error: "Failed to create Jira issue",
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
 app.post("/mcp", async (req, res) => {
   console.log("\n=== Incoming Request ===");
   console.log("Method:", req.method);
