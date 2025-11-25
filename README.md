@@ -178,6 +178,70 @@ If there's an error, you'll receive a response like:
   - Verify all required variables are set in your `.env` file
   - Restart the server after updating `.env` file
 
+## Deployment to Render
+
+This server can be deployed to Render for a public HTTPS endpoint.
+
+### Prerequisites
+
+- A Render account (free tier available)
+- Your repository pushed to GitHub (or connected to Render)
+
+### Deployment Steps
+
+1. **Connect Repository to Render**:
+
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click "New +" → "Web Service"
+   - Connect your GitHub repository
+   - Select the `jira-mcp-server` repository
+
+2. **Configure the Service**:
+
+   - **Name**: `jira-mcp-server` (or your preferred name)
+   - **Environment**: `Node`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Plan**: Free (or choose a paid plan)
+
+3. **Set Environment Variables**:
+   Add the following environment variables in Render's dashboard:
+
+   - `JIRA_BASE_URL` - Your Jira instance URL (e.g., `https://your-domain.atlassian.net`)
+   - `JIRA_EMAIL` - Your Jira account email
+   - `JIRA_API_TOKEN` - Your Jira API token
+   - `JIRA_PROJECT_KEY` - Your Jira project key
+   - `USE_HTTPS` - Set to `false` (Render handles HTTPS termination)
+   - `NODE_ENV` - Set to `production`
+
+4. **Deploy**:
+   - Click "Create Web Service"
+   - Render will automatically build and deploy your service
+   - Your service will be available at `https://your-service-name.onrender.com/mcp`
+
+### Using render.yaml (Alternative)
+
+If you prefer configuration as code, you can use the included `render.yaml` file:
+
+1. Push your code to GitHub (make sure `render.yaml` is included)
+2. In Render Dashboard, go to "New +" → "Blueprint"
+3. Connect your repository
+4. Render will automatically detect and use `render.yaml`
+5. Set the environment variables (marked as `sync: false` in the YAML)
+
+### Post-Deployment
+
+After deployment, your MCP server will be available at:
+
+```
+https://your-service-name.onrender.com/mcp
+```
+
+You can test it using Postman MCP Client:
+
+- Server URL: `https://your-service-name.onrender.com/mcp`
+- Connection Type: HTTPS (no certificate warnings since Render provides valid SSL)
+
 ## Development
 
 The server uses:

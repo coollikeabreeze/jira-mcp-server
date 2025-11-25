@@ -6,6 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/jira-issue-server.ts",
+    "build": "tsc",
+    "start": "node dist/jira-issue-server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

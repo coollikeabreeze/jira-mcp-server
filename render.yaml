@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: jira-mcp-server
+    env: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: USE_HTTPS
+        value: false
+      - key: PORT
+        fromService:
+          type: web
+          name: jira-mcp-server
+          property: port
+      - key: JIRA_BASE_URL
+        sync: false
+      - key: JIRA_EMAIL
+        sync: false
+      - key: JIRA_API_TOKEN
+        sync: false
+      - key: JIRA_PROJECT_KEY
+        sync: false
