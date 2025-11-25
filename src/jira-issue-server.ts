@@ -66,6 +66,40 @@ import "dotenv/config";
 const app = express();
 app.use(express.json());
 
+// API Key Authentication Middleware
+const apiKeyAuth = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  const apiKey =
+    req.headers["x-api-key"] ||
+    req.headers["authorization"]?.replace("Bearer ", "");
+  const validApiKey = process.env.API_KEY;
+
+  // Skip auth for health checks
+  if (req.path === "/" || (req.path === "/mcp" && req.method === "GET")) {
+    return next();
+  }
+
+  if (!validApiKey) {
+    // If no API_KEY is set, allow access (for development)
+    return next();
+  }
+
+  if (!apiKey || apiKey !== validApiKey) {
+    return res.status(401).json({
+      error: "Unauthorized",
+      message:
+        "Valid API key required. Provide it in X-API-Key header or Authorization: Bearer <key>",
+    });
+  }
+
+  next();
+};
+
+app.use(apiKeyAuth);
+
 // Health check endpoint
 app.get("/", (req, res) => {
   res.json({ status: "ok", service: "jira-mcp-server" });

@@ -6,12 +6,23 @@ info:
 servers:
   - url: https://your-service-name.onrender.com
     description: Production server
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+security:
+  - ApiKeyAuth: []
 paths:
   /api/create-issue:
     post:
       summary: Create a Jira issue
       description: Creates a new issue in the configured Jira project
       operationId: createJiraIssue
+      security:
+        - ApiKeyAuth: []
       requestBody:
         required: true
         content:
