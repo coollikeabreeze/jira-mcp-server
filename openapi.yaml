@@ -8,13 +8,13 @@ servers:
     description: Production server
 components:
   securitySchemes:
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
-      description: API key for authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: "API Key"
+      description: "Enter your API key as a Bearer token"
 security:
-  - ApiKeyAuth: []
+  - BearerAuth: []
 paths:
   /api/create-issue:
     post:
@@ -22,7 +22,7 @@ paths:
       description: Creates a new issue in the configured Jira project
       operationId: createJiraIssue
       security:
-        - ApiKeyAuth: []
+        - BearerAuth: []
       requestBody:
         required: true
         content:
@@ -63,18 +63,30 @@ paths:
             application/json:
               schema:
                 type: object
+                required:
+                  - success
+                  - issueKey
                 properties:
                   success:
                     type: boolean
+                    example: true
                   issueKey:
                     type: string
+                    description: The Jira issue key
                     example: "PROJ-456"
                   issueId:
                     type: string
+                    description: The Jira issue ID
+                    example: "12345"
                   url:
                     type: string
+                    format: uri
+                    description: URL to view the issue
+                    example: "https://your-domain.atlassian.net/rest/api/3/issue/12345"
                   message:
                     type: string
+                    description: Success message
+                    example: "Created Jira issue PROJ-456"
         "400":
           description: Bad request - missing required fields
         "500":
