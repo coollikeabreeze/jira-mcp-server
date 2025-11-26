@@ -139,6 +139,31 @@ app.post("/api/create-issue", async (req, res) => {
       });
     }
 
+    // Validate ADF structure if provided as object (strings will be converted in jiraClient)
+    if (typeof description === "object" && description !== null) {
+      if (
+        description.type !== "doc" ||
+        description.version !== 1 ||
+        !Array.isArray(description.content)
+      ) {
+        return res.status(400).json({
+          error: "Invalid ADF format",
+          message:
+            "If description is provided as an object, it must be valid ADF JSON with type 'doc', version 1, and a content array",
+          example: {
+            type: "doc",
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Description text" }],
+              },
+            ],
+          },
+        });
+      }
+    }
+
     const result = await createJiraIssue({
       summary,
       description,

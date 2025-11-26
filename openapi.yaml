@@ -40,26 +40,46 @@ paths:
                   description: The issue summary/title
                   example: "Fix login bug"
                 description:
-                  type: object
-                  description: The issue description in Atlassian Document Format (ADF) JSON
-                  example:
-                    type: "doc"
-                    version: 1
-                    content:
-                      - type: "paragraph"
+                  oneOf:
+                    - type: string
+                      description: Plain text description (will be converted to ADF format)
+                      example: "Users cannot log in with their credentials"
+                    - type: object
+                      description: |
+                        Atlassian Document Format (ADF) JSON object for rich text formatting.
+                        Preferred format - supports bold, italic, links, lists, etc.
+                        If provided, this will be used directly without conversion.
+                      required:
+                        - type
+                        - version
+                        - content
+                      properties:
+                        type:
+                          type: string
+                          enum: ["doc"]
+                          example: "doc"
+                        version:
+                          type: number
+                          enum: [1]
+                          example: 1
                         content:
-                          - type: "text"
-                            text: "Users cannot log in with their credentials"
-                  properties:
-                    type:
-                      type: string
-                      example: "doc"
-                    version:
-                      type: number
-                      example: 1
-                    content:
-                      type: array
-                      description: Array of ADF content nodes
+                          type: array
+                          description: Array of ADF content nodes (paragraphs, headings, lists, etc.)
+                          items:
+                            type: object
+                          example:
+                            - type: "paragraph"
+                              content:
+                                - type: "text"
+                                  text: "Users cannot log in with their credentials"
+                                - type: "text"
+                                  text: " - "
+                                  marks:
+                                    - type: "strong"
+                                - type: "text"
+                                  text: "urgent"
+                                  marks:
+                                    - type: "strong"
                 issuetype:
                   type: string
                   description: The issue type (e.g., Task, Bug, Story)
