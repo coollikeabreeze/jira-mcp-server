@@ -1,6 +1,15 @@
-# Jira MCP Server - Local Test Project
+# Jira MCP Server
 
-A test project for a Model Context Protocol (MCP) server for creating Jira issues via HTTP API. This server provides a local HTTPS endpoint that accepts MCP protocol requests to create Jira tickets. Instructions included to test via Postman.
+A Model Context Protocol (MCP) server for creating Jira issues. This server implements the MCP protocol and can be used with MCP-compatible clients (like Postman MCP Client) or integrated as a Custom GPT Action for ChatGPT.
+
+## Overview
+
+This is a dual-purpose server that provides:
+
+- **MCP Protocol Endpoint** (`/mcp`) - For MCP-compatible clients using the Model Context Protocol
+- **REST API Endpoint** (`/api/create-issue`) - For Custom GPT Actions and other REST API clients
+
+Both endpoints create Jira issues, but use different protocols. The MCP endpoint uses JSON-RPC format, while the REST endpoint uses standard HTTP/JSON.
 
 ## Prerequisites
 
@@ -68,9 +77,13 @@ npm run dev
 
 The server will start on `https://localhost:3000/mcp` (or your configured PORT).
 
-## Testing with Postman
+## Usage
 
-### Using Postman MCP Client
+### As an MCP Server
+
+The primary use case is as an MCP server. Connect using any MCP-compatible client:
+
+#### Testing with Postman MCP Client
 
 Postman has built-in support for MCP servers via the MCP Client. Here's how to connect:
 
@@ -99,7 +112,9 @@ Once connected, you can use the `create_jira_issue` tool:
 **Required parameters:**
 
 - `summary` (string) - Issue summary/title
-- `description` (string) - Issue description
+- `description` (string or ADF JSON object) - Issue description. Accepts:
+  - **String**: Plain text description (will be converted to ADF format)
+  - **ADF JSON object**: Atlassian Document Format for rich text (preferred). This is the format sent by Custom GPT Actions, supporting bold, italic, links, lists, and other formatting.
 - `issuetype` (string) - Issue type name (e.g., "Task", "Bug", "Story")
 
 **Optional parameters:**
@@ -110,7 +125,8 @@ Once connected, you can use the `create_jira_issue` tool:
 **Example tool call:**
 
 - Tool: `create_jira_issue`
-- Arguments:
+- Arguments (with string description):
+
   ```json
   {
     "summary": "Test Issue from Postman",
@@ -118,6 +134,39 @@ Once connected, you can use the `create_jira_issue` tool:
     "issuetype": "Task",
     "parentKey": "PROJ-123",
     "labels": ["test", "postman"]
+  }
+  ```
+
+- Arguments (with ADF JSON description - used by Custom GPT Actions):
+  ```json
+  {
+    "summary": "Test Issue from GPT",
+    "description": {
+      "type": "doc",
+      "version": 1,
+      "content": [
+        {
+          "type": "paragraph",
+          "content": [
+            {
+              "type": "text",
+              "text": "This is a test issue with "
+            },
+            {
+              "type": "text",
+              "text": "rich text formatting",
+              "marks": [
+                {
+                  "type": "strong"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "issuetype": "Task",
+    "labels": ["test", "gpt"]
   }
   ```
 
@@ -233,14 +282,39 @@ If you prefer configuration as code, you can use the included `render.yaml` file
 
 After deployment, your MCP server will be available at:
 
-```
-https://your-service-name.onrender.com/mcp
-```
+- **MCP Endpoint**: `https://your-service-name.onrender.com/mcp`
+- **REST API Endpoint**: `https://your-service-name.onrender.com/api/create-issue`
 
-You can test it using Postman MCP Client:
+**Testing the MCP Endpoint:**
 
+- Use Postman MCP Client or any MCP-compatible client
 - Server URL: `https://your-service-name.onrender.com/mcp`
 - Connection Type: HTTPS (no certificate warnings since Render provides valid SSL)
+
+**Testing the REST API Endpoint:**
+
+- Use any HTTP client or integrate as a Custom GPT Action
+- Endpoint: `https://your-service-name.onrender.com/api/create-issue`
+- Requires Bearer token authentication (set `API_KEY` in Render)
+
+### As a Custom GPT Action
+
+This MCP server also exposes a REST API endpoint compatible with Custom GPT Actions, allowing you to integrate Jira issue creation directly into ChatGPT.
+
+**Setup Steps:**
+
+1. **Deploy to Render** (see Deployment section below)
+2. **Copy the OpenAPI Schema**: Copy the contents of `openapi.yaml` from your repository
+3. **Add to Custom GPT**: In your Custom GPT configuration, go to Actions → Create new action → Paste the schema
+4. **Configure Authentication**:
+   - Select "Bearer" authentication
+   - Enter your `API_KEY` value (set in Render environment variables)
+5. **Description Format**: When using Custom GPT Actions, the `description` field will be automatically sent as ADF JSON format, enabling rich text formatting in Jira issues (bold, italic, links, lists, etc.)
+
+**Endpoints:**
+
+- `/mcp` - MCP protocol endpoint (for MCP clients)
+- `/api/create-issue` - REST API endpoint (for Custom GPT Actions)
 
 ## Development
 

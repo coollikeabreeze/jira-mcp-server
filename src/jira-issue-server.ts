@@ -2,7 +2,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { z } from "zod";
 import express from "express";
-import { createJiraIssue } from "./jiraClient.js";
+import { createJiraIssue, updateJiraIssue } from "./jiraClient.js";
 
 const server = new McpServer({
   name: "jira-ticket-server",
@@ -54,6 +54,51 @@ server.registerTool(
         issueId: result.id,
         url: result.self,
       },
+    };
+  }
+);
+
+const updateIssueSchema = z.object({
+  issueId: z.string(),
+  summary: z.string().optional(),
+  description: z.string().optional(),
+  issuetype: z.string().optional(),
+  // sprint: z.string().optional(),
+  parentKey: z.string().optional(),
+  labels: z.array(z.string()).optional(),
+});
+
+server.registerTool(
+  "update_jira_issue",
+  {
+    title: "Update Jira Issue Tool",
+    description: "Update a Jira issue in the configured project",
+    inputSchema: updateIssueSchema,
+  },
+  async ({
+    issueId,
+    summary,
+    description,
+    issuetype,
+    // sprint,
+    parentKey,
+    labels,
+  }) => {
+    await updateJiraIssue({
+      issueId,
+      summary,
+      description,
+      // sprint,
+      parentKey,
+      labels,
+    });
+    return {
+      content: [
+        {
+          type: "text",
+          text: `Updated Jira issue ${issueId}`,
+        },
+      ],
     };
   }
 );
@@ -181,6 +226,64 @@ app.post("/api/create-issue", async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating Jira issue:", error);
+    res.status(500).json({
+      error: "Failed to create Jira issue",
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+app.put("/api/update-issue", async (req, res) => {
+  try {
+    const { issueId, summary, description, issuetype, parentKey, labels } =
+      req.body;
+
+    if (!issueId) {
+      return res.status(400).json({
+        error: "Missing required fields",
+        required: ["issueId"],
+      });
+    }
+
+    // Validate ADF structure if provided as object (strings will be converted in jiraClient)
+    if (typeof description === "object" && description !== null) {
+      if (
+        description.type !== "doc" ||
+        description.version !== 1 ||
+        !Array.isArray(description.content)
+      ) {
+        return res.status(400).json({
+          error: "Invalid ADF format",
+          message:
+            "If description is provided as an object, it must be valid ADF JSON with type 'doc', version 1, and a content array",
+          example: {
+            type: "doc",
+            version: 1,
+            content: [
+              {
+                type: "paragraph",
+                content: [{ type: "text", text: "Description text" }],
+              },
+            ],
+          },
+        });
+      }
+    }
+
+    const result = await updateJiraIssue({
+      issueId,
+      summary,
+      description,
+      issuetype,
+      parentKey,
+      labels,
+    });
+
+    res.json({
+      success: true,
+    });
+  } catch (error) {
+    console.error("Error updating Jira issue", error);
     res.status(500).json({
       error: "Failed to create Jira issue",
       message: error instanceof Error ? error.message : String(error),

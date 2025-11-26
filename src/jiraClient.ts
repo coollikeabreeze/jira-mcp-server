@@ -91,3 +91,84 @@ export const createJiraIssue = async (input: CreateIssueInput) => {
   const json = await response.json();
   return json;
 };
+
+export interface UpdateIssueInput {
+  issueId: string;
+  summary?: string;
+  description?: string | any; // Can be string (legacy) or ADF JSON object
+  issuetype?: string;
+  parentKey?: string;
+  labels?: string[];
+}
+
+export const updateJiraIssue = async (input: UpdateIssueInput) => {
+  const body: any = {
+    fields: {},
+  };
+
+  if (input?.summary) {
+    body.fields.summary = input.summary;
+  }
+
+  if (input?.description) {
+    if (typeof input.description === "string") {
+      body.fields.description = {
+        content: [
+          {
+            type: "doc",
+            version: 1,
+            content: [
+              {
+                text: input.description,
+                type: "text",
+              },
+            ],
+          },
+        ],
+      };
+    } else body.fields.description = input.description;
+  }
+
+  if (input.parentKey) {
+    body.fields.parent = { key: input.parentKey };
+  }
+
+  if (input.labels && input.labels.length > 0) {
+    body.fields.labels = input.labels;
+  }
+
+  if (input?.issuetype) {
+    body.fields.labels = input.issuetype;
+  }
+
+  const response = await fetch(`${baseUrl}/rest/api/3/issue/${input.issueId}`, {
+    method: "PUT",
+    headers: {
+      Authorization: authHeader,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    console.error("\n=== JIRA PUT API ERROR ===");
+    console.error("Status:", response.status, response.statusText);
+    console.error("Response Body:", text);
+    console.error("Request Body:", JSON.stringify(body, null, 2));
+
+    // Try to parse as JSON for better error details
+    try {
+      const errorJson = JSON.parse(text);
+      console.error("Parsed Error:", JSON.stringify(errorJson, null, 2));
+    } catch (e) {
+      // Response wasn't JSON, already logged as text
+    }
+
+    throw new Error(`Jira error ${response.status}: ${text}`);
+  }
+
+  const json = await response.json();
+  return json;
+};

@@ -166,3 +166,138 @@ paths:
                   message:
                     type: string
                     example: "Failed to create Jira issue"
+  /api/update-issue:
+    put:
+      tags:
+        - Jira Issues
+      summary: Update a Jira Issue
+      description: Updates an issue in the configured Jira project
+      operationId: updateJiraIssue
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - issueId
+              properties:
+                issueId:
+                  type: string
+                  description: The Jira issue id or number
+                  example: "PROJ-123"
+                summary:
+                  type: string
+                  description: The issue summary/title (optional)
+                  example: "Update PUT API"
+                description:
+                  oneOf:
+                    - type: string
+                      description: Plain text description (will be converted to ADF format) (optional)
+                      example: "As a developer, I want to create a PUT endpoint for Jira issues."
+                    - type: object
+                      description: |
+                        Atlassian Document Format (ADF) JSON object for rich text formatting.
+                        Preferred format - supports bold, italic, links, lists, etc.
+                        If provided, this will be used directly without conversion.
+                      required:
+                        - type
+                        - version
+                        - content
+                      properties:
+                        type:
+                          type: string
+                          enum: ["doc"]
+                          example: "doc"
+                        version:
+                          type: number
+                          enum: [1]
+                          example: 1
+                        content:
+                          type: array
+                          description: Array of ADF content nodes (paragraphs, headings, lists, etc.)
+                          items:
+                            type: object
+                          example:
+                            - type: "paragraph"
+                              content:
+                                - type: "text"
+                                  text: "As a developer, I want to create a PUT endpoint for Jira issues."
+                                - type: "text"
+                                  text: " - "
+                                  marks:
+                                    - type: "strong"
+                                - type: "text"
+                                  text: "urgent"
+                                  marks:
+                                    - type: "strong"
+                  issuetype:
+                    type: string
+                    description: The issue type (e.g. Story or Bug) (optional)
+                    example: "Story"
+                  parentKey:
+                    type: string
+                    description: "Parent issue key for issues (optional)"
+                    example: "PROJ-123"
+                  labels:
+                    type: array
+                    items:
+                      type: string
+                    description: Labels to apply to the issue (optional)
+                    example: ["POC", "MCP"]
+      responses:
+        "200":
+          description: Issue updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        "400":
+          description: Bad request - missing required fields
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Missing required fields"
+                  required:
+                    type: array
+                    items:
+                      type: string
+                    example: ["issueId"]
+        "401":
+          description: Unauthorized - invalid or missing API key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Unauthorized"
+                  message:
+                    type: string
+                    example: "Valid API key required"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Internal Server Error"
+                  message:
+                    type: string
+                    example: "Failed to update Jira issue"
